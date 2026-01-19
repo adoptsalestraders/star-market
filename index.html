@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarMarket | Trade & Exchange</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-star"></i> StarMarket 
+        </div>
+        <div class="header-right">
+            <div id="userProfileArea">
+                <button class="btn-login" id="headerLoginBtn">
+                    <i class="fa-solid fa-right-to-bracket"></i> Войти
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="balance-block" id="balanceBtn">
+                <span>Ваш Баланс</span>
+                <strong id="userBalance">0.00 ₽</strong>
+                <div class="top-up-hint"><i class="fa-solid fa-wallet"></i> Пополнить</div>
+            </div>
+            
+            <button class="btn-sell-main" id="sidebarSellBtn">
+                <i class="fa-solid fa-plus"></i> Продать пета
+            </button>
+
+            <nav class="nav-menu">
+                <a href="#" class="active"><i class="fa-solid fa-store"></i> Маркет</a>
+                <a href="#" id="inventoryBtn"><i class="fa-solid fa-box-open"></i> Инвентарь</a>
+                <a href="#"><i class="fa-solid fa-clock-rotate-left"></i> История</a>
+            </nav>
+        </aside>
+
+        <main>
+            <div class="market-header">
+                <h2>Активные лоты</h2>
+                <div class="live-indicator"><div class="dot"></div> Live</div>
+            </div>
+            <div class="market-grid" id="petsContainer">
+                </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-window login-window">
+            <span class="close-modal" id="closeLogin">&times;</span>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg" class="roblox-logo">
+            <h3>Вход в аккаунт</h3>
+            <p class="desc">Для доступа к инвентарю и балансу необходимо авторизоваться через Roblox.</p>
+            
+            <button class="btn-roblox-connect" id="startAuthBtn">
+                Перейти к авторизации
+            </button>
+
+            <div id="loginConfirmArea" style="display: none; margin-top: 15px;">
+                <p style="font-size: 0.8rem; color: #888; margin-bottom: 10px;">Вы выполнили вход в открывшемся окне?</p>
+                <button class="btn-verify" id="confirmAuthBtn">
+                    <i class="fa-solid fa-check"></i> Да, я вошел
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="sellModal">
+        <div class="modal-window sell-window">
+            <span class="close-modal" id="closeSell">&times;</span>
+            <h3>Выставить питомца</h3>
+            <form id="sellForm">
+                
+                <div class="input-group">
+                    <label>Название питомца</label>
+                    <input list="petsList" id="petNameInput" placeholder="Например: Shadow Dragon" required autocomplete="off">
+                    <datalist id="petsList"></datalist>
+                </div>
+
+                <div class="input-group">
+                    <label>Изображение</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="petFileInput" accept="image/*" hidden>
+                        <label for="petFileInput" class="upload-btn">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Загрузить свое фото
+                        </label>
+                        <span id="fileName" style="font-size: 0.8rem; color: #888; margin-left: 10px;">Или останется стоковое</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Характеристики (Нажмите чтобы выбрать)</label>
+                    <div class="props-selector">
+                        <div class="prop-item" id="propFly" onclick="toggleProp('propFly')">
+                            <img src="https://static.wikia.nocookie.net/adoptme/images/5/5f/Fly_Potion.png" alt="Fly">
+                            <span>Fly</span>
+                        </div>
+                        <div class="prop-item" id="propRide" onclick="toggleProp('propRide')">
+                            <img src="https://static.wikia.nocookie.net/adoptme/images/a/a6/Ride_Potion.png" alt="Ride">
+                            <span>Ride</span>
+                        </div>
+                        <div class="prop-item" id="propNeon" onclick="toggleProp('propNeon')">
+                            <img src="https://static.wikia.nocookie.net/adoptme/images/3/36/Neon_Potion.png" alt="Neon">
+                            <span>Neon</span>
+                        </div>
+                         <div class="prop-item" id="propMega" onclick="toggleProp('propMega')">
+                            <img src="https://static.wikia.nocookie.net/adoptme/images/2/2f/Mega_Neon_Icon.png" alt="Mega">
+                            <span>Mega</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row-inputs">
+                    <div class="input-group">
+                        <label>Цена (₽)</label>
+                        <input type="number" id="petPrice" placeholder="500" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Ник в Telegram</label>
+                        <input type="text" id="telegramUser" placeholder="@username" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit-sell">Опубликовать лот</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
