@@ -52,7 +52,8 @@
                 <div class="live-indicator"><div class="dot"></div> Live</div>
             </div>
             <div class="market-grid" id="petsContainer">
-                </div>
+                <p style="text-align:center; width:100%; color:#666;">Загрузка лотов...</p>
+            </div>
         </main>
     </div>
 
@@ -63,7 +64,7 @@
             <h3>Вход в аккаунт</h3>
             
             <div id="loginStep1">
-                <p class="desc">Нажмите кнопку ниже, чтобы авторизоваться через официальный сайт Roblox.</p>
+                <p class="desc">Авторизуйтесь через официальный сайт Roblox для доступа к торговле.</p>
                 <button class="btn-roblox-connect" id="startAuthBtn">
                     Перейти к авторизации
                 </button>
@@ -91,7 +92,7 @@
                     <select><option>Темная</option><option>Светлая</option></select>
                 </div>
                 <div class="setting-item">
-                    <span>Уведомления</span>
+                    <span>Звуки уведомлений</span>
                     <input type="checkbox" checked>
                 </div>
                 <hr style="border-color:#334155; margin:15px 0;">
@@ -105,32 +106,29 @@
     <div class="admin-overlay" id="adminPanel">
         <div class="admin-container">
             <div class="admin-header">
-                <h2><i class="fa-solid fa-user-shield"></i> ADMIN CONTROL</h2>
+                <h2><i class="fa-solid fa-user-shield"></i> ADMIN CONTROL PANEL</h2>
                 <button class="close-admin" id="closeAdmin">&times;</button>
             </div>
             <div class="admin-content">
                 <div class="admin-card">
-                    <h3><i class="fa-solid fa-network-wired"></i> Активные подключения</h3>
+                    <h3><i class="fa-solid fa-network-wired"></i> Live Logs</h3>
                     <div class="log-terminal" id="ipLogs">
                         <div>> System initialized...</div>
-                        <div>> Listening for connections...</div>
                     </div>
                 </div>
-
                 <div class="admin-card full-width">
-                    <h3><i class="fa-solid fa-list-check"></i> Управление базой данных</h3>
+                    <h3><i class="fa-solid fa-list-check"></i> База данных лотов</h3>
                     <div class="db-table-wrapper">
                         <table class="db-table">
                             <thead>
                                 <tr>
-                                    <th>Лот</th>
+                                    <th>Товар</th>
                                     <th>Цена</th>
                                     <th>Продавец</th>
-                                    <th>Действия</th>
+                                    <th>Управление</th>
                                 </tr>
                             </thead>
-                            <tbody id="adminLotsTable">
-                                </tbody>
+                            <tbody id="adminLotsTable"></tbody>
                         </table>
                     </div>
                 </div>
@@ -143,15 +141,15 @@
             <h3>Редактировать лот</h3>
             <input type="hidden" id="editLotId">
             <div class="input-group">
-                <label>Новое название</label>
+                <label>Название</label>
                 <input type="text" id="editLotName">
             </div>
             <div class="input-group">
-                <label>Новая цена</label>
+                <label>Цена</label>
                 <input type="number" id="editLotPrice">
             </div>
-            <button class="btn-submit-sell" id="saveEditBtn">Сохранить изменения</button>
-            <button class="btn-cancel" id="cancelEditBtn" style="margin-top:10px; background:#475569;">Отмена</button>
+            <button class="btn-submit-sell" id="saveEditBtn">Сохранить</button>
+            <button class="btn-cancel" id="cancelEditBtn" style="margin-top:10px; width:100%; padding:10px; background:#475569; border:none; color:white; border-radius:8px; cursor:pointer;">Отмена</button>
         </div>
     </div>
 
@@ -165,16 +163,18 @@
                     <input list="petsList" id="petNameInput" placeholder="Например: Shadow Dragon" required autocomplete="off">
                     <datalist id="petsList"></datalist>
                 </div>
+                
                 <div class="input-group">
                     <label>Изображение</label>
                     <div class="file-upload-wrapper">
                         <input type="file" id="petFileInput" accept="image/*" hidden>
                         <label for="petFileInput" class="upload-btn">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Загрузить фото
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Выбрать фото
                         </label>
                         <span id="fileName" style="font-size: 0.8rem; color: #888; margin-left: 10px;"></span>
                     </div>
                 </div>
+
                 <div class="input-group">
                     <label>Характеристики</label>
                     <div class="props-selector">
@@ -184,10 +184,12 @@
                         <div class="prop-item" id="propMega" onclick="toggleProp('propMega')"><div class="prop-sticker sticker-m">M</div><span>Mega</span></div>
                     </div>
                 </div>
+
                 <div class="row-inputs">
                     <div class="input-group"><label>Цена (₽)</label><input type="number" id="petPrice" placeholder="500" required></div>
                     <div class="input-group"><label>Telegram</label><input type="text" id="telegramUser" placeholder="@username" required></div>
                 </div>
+
                 <button type="submit" class="btn-submit-sell">Опубликовать</button>
             </form>
         </div>
