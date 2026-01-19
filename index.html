@@ -96,10 +96,26 @@
                     <input type="checkbox" checked>
                 </div>
                 <hr style="border-color:#334155; margin:15px 0;">
-                <button class="btn-admin-access" id="openAdminLogin">
+                
+                <button class="btn-admin-access" id="goToAdminAuth">
                     <i class="fa-solid fa-lock"></i> Панель администратора
                 </button>
             </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="adminAuthModal">
+        <div class="modal-window" style="width: 350px;">
+            <span class="close-modal" id="closeAdminAuth">&times;</span>
+            <h3>Доступ к панели</h3>
+            <p class="desc">Введите код доступа администратора</p>
+            
+            <div class="input-group">
+                <input type="password" id="adminPasswordInput" placeholder="Пароль..." style="text-align:center; font-size:1.2rem; letter-spacing: 2px;">
+            </div>
+            
+            <button class="btn-verify" id="submitAdminPassword">Войти</button>
+            <p id="adminAuthError" style="color:#ef4444; font-size:0.8rem; margin-top:10px; display:none;">Неверный пароль</p>
         </div>
     </div>
 
