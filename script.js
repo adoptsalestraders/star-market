@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// --- ВСТАВЬ СВОЙ КОНФИГ FIREBASE СЮДА ---
+// --- ВСТАВЬ СВОЙ КОНФИГ FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyBUVG2e9TVe6WlU72Hrjin03QXtkTGiNc0",
   authDomain: "star-marketdb.firebaseapp.com",
@@ -21,12 +21,12 @@ const NO_IMAGE_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMwAAADACAMA
 
 let currentUser = null; 
 
-// Элементы
 const petsContainer = document.getElementById('petsContainer');
 const loginModal = document.getElementById('loginModal');
 const sellModal = document.getElementById('sellModal');
+const adminAuthModal = document.getElementById('adminAuthModal');
 
-// Список петов
+// Заполнение списка петов
 const petsList = document.getElementById('petsList');
 const petNames = ["Shadow Dragon","Bat Dragon","Giraffe","Frost Dragon","Owl","Parrot","Evil Unicorn","Crow","Arctic Reindeer","Turtle","Kangaroo","Unicorn","Dragon","Kitsune"];
 petNames.sort().forEach(pet => {
@@ -35,9 +35,9 @@ petNames.sort().forEach(pet => {
     petsList.appendChild(opt);
 });
 
-// =========================================================
-// 1. ПОЛУЧЕНИЕ ЛОТОВ (REALTIME)
-// =========================================================
+// ==========================================
+// 1. ЗАГРУЗКА ЛОТОВ (REALTIME)
+// ==========================================
 onValue(petsRef, (snapshot) => {
     petsContainer.innerHTML = "";
     const adminTable = document.getElementById('adminLotsTable');
@@ -58,7 +58,7 @@ onValue(petsRef, (snapshot) => {
 function renderCard(lot) {
     const card = document.createElement('div');
     card.className = 'item-card';
-
+    
     let badgesHtml = "";
     if(lot.stickers && lot.stickers.length > 0) {
         badgesHtml = `<div class="badges-row">`;
@@ -85,14 +85,14 @@ function renderCard(lot) {
     petsContainer.appendChild(card);
 }
 
-// =========================================================
-// 2. СИСТЕМА ВХОДА
-// =========================================================
+// ==========================================
+// 2. АВТОРИЗАЦИЯ
+// ==========================================
 const startAuthBtn = document.getElementById('startAuthBtn');
-const step1 = document.getElementById('loginStep1');
-const step2 = document.getElementById('loginStep2');
 const confirmAuthBtn = document.getElementById('confirmAuthBtn');
 const authStatusText = document.getElementById('authStatusText');
+const step1 = document.getElementById('loginStep1');
+const step2 = document.getElementById('loginStep2');
 
 function checkAuth() {
     if (currentUser) return true;
@@ -110,17 +110,16 @@ startAuthBtn.onclick = () => {
     window.open(ROBLOX_AUTH_LINK, '_blank');
     step1.style.display = 'none';
     step2.style.display = 'block';
-    
-    // Имитация ожидания пользователя
     authStatusText.innerText = "Ожидание перехода...";
+    
     setTimeout(() => {
-        authStatusText.innerText = "Готово к проверке";
+        authStatusText.innerText = "Ожидание действий пользователя...";
         confirmAuthBtn.style.display = 'block';
-    }, 2000);
+    }, 2500);
 };
 
 confirmAuthBtn.onclick = () => {
-    authStatusText.innerText = "Сканирование...";
+    authStatusText.innerText = "Проверка...";
     setTimeout(() => {
         const rnd = Math.floor(Math.random() * 9000) + 1000;
         currentUser = { name: `User_${rnd}` };
@@ -133,9 +132,85 @@ confirmAuthBtn.onclick = () => {
     }, 1500);
 };
 
-// =========================================================
-// 3. ПРОДАЖА
-// =========================================================
+// ==========================================
+// 3. НАСТРОЙКИ И АДМИН ПАНЕЛЬ
+// ==========================================
+const settingsModal = document.getElementById('settingsModal');
+const adminPanel = document.getElementById('adminPanel');
+
+document.getElementById('settingsBtn').addEventListener('click', () => settingsModal.style.display = 'flex');
+
+// Кнопка "Панель администратора" в настройках
+document.getElementById('goToAdminAuth').onclick = () => {
+    settingsModal.style.display = 'none'; // Скрыть настройки
+    adminAuthModal.style.display = 'flex'; // Показать ввод пароля
+    document.getElementById('adminPasswordInput').value = ""; // Очистить поле
+    document.getElementById('adminAuthError').style.display = 'none';
+};
+
+// Проверка пароля
+document.getElementById('submitAdminPassword').onclick = () => {
+    const pass = document.getElementById('adminPasswordInput').value;
+    if(pass === "admin123") {
+        adminAuthModal.style.display = 'none';
+        adminPanel.style.display = 'flex';
+        startFakeLogs();
+    } else {
+        document.getElementById('adminAuthError').style.display = 'block';
+    }
+};
+
+function renderAdminRow(lot, table) {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${lot.name}</td>
+        <td>${lot.price} ₽</td>
+        <td>@${lot.contact}</td>
+        <td>
+            <button class="btn-action act-edit" onclick="openEdit('${lot.key}', '${lot.name}', '${lot.price}')">Edit</button>
+            <button class="btn-action act-del" onclick="deleteLot('${lot.key}')">Del</button>
+        </td>
+    `;
+    table.appendChild(row);
+}
+
+window.deleteLot = (key) => {
+    if(confirm("Удалить этот лот?")) remove(ref(db, 'market_lots/' + key));
+};
+
+const editModal = document.getElementById('editModal');
+window.openEdit = (key, name, price) => {
+    document.getElementById('editLotId').value = key;
+    document.getElementById('editLotName').value = name;
+    document.getElementById('editLotPrice').value = price;
+    editModal.style.display = 'flex';
+};
+
+document.getElementById('saveEditBtn').onclick = () => {
+    const key = document.getElementById('editLotId').value;
+    update(ref(db, 'market_lots/' + key), {
+        name: document.getElementById('editLotName').value,
+        price: document.getElementById('editLotPrice').value
+    }).then(() => editModal.style.display = 'none');
+};
+document.getElementById('cancelEditBtn').onclick = () => editModal.style.display = 'none';
+
+function startFakeLogs() {
+    const logDiv = document.getElementById('ipLogs');
+    setInterval(() => {
+        if(adminPanel.style.display === 'none') return;
+        const ips = ["192.168.0.1", "10.5.22.1", "88.55.12.90", "45.11.2.1"];
+        const ip = ips[Math.floor(Math.random()*ips.length)];
+        const line = document.createElement('div');
+        line.innerHTML = `> [${new Date().toLocaleTimeString()}] Connection ${ip} <span style="color:#22c55e">OK</span>`;
+        logDiv.appendChild(line);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }, 2000);
+}
+
+// ==========================================
+// 4. ПРОДАЖА
+// ==========================================
 document.getElementById('sidebarSellBtn').onclick = () => { if(checkAuth()) sellModal.style.display = 'flex'; };
 
 const selectedProps = { propFly: false, propRide: false, propNeon: false, propMega: false };
@@ -181,79 +256,12 @@ document.getElementById('sellForm').addEventListener('submit', (e) => {
         sellModal.style.display = 'none';
         document.getElementById('sellForm').reset();
         customImageBase64 = null;
+        document.getElementById('fileName').innerText = "";
         Object.keys(selectedProps).forEach(k => { selectedProps[k]=false; document.getElementById(k).classList.remove('selected'); });
     });
 });
 
-// =========================================================
-// 4. НАСТРОЙКИ И АДМИНКА
-// =========================================================
-const settingsModal = document.getElementById('settingsModal');
-const adminPanel = document.getElementById('adminPanel');
-
-document.getElementById('settingsBtn').addEventListener('click', () => settingsModal.style.display = 'flex');
-
-document.getElementById('openAdminLogin').onclick = () => {
-    const pass = prompt("Пароль администратора:");
-    if(pass === "admin123") {
-        settingsModal.style.display = 'none';
-        adminPanel.style.display = 'flex';
-        startFakeLogs();
-    } else {
-        alert("Неверный пароль");
-    }
-};
-
-// Админские функции
-function renderAdminRow(lot, table) {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-        <td>${lot.name}</td>
-        <td>${lot.price} ₽</td>
-        <td>@${lot.contact}</td>
-        <td>
-            <button class="btn-action act-edit" onclick="openEdit('${lot.key}', '${lot.name}', '${lot.price}')">Edit</button>
-            <button class="btn-action act-del" onclick="deleteLot('${lot.key}')">Del</button>
-        </td>
-    `;
-    table.appendChild(row);
-}
-
-window.deleteLot = (key) => {
-    if(confirm("Удалить лот?")) remove(ref(db, 'market_lots/' + key));
-};
-
-const editModal = document.getElementById('editModal');
-window.openEdit = (key, name, price) => {
-    document.getElementById('editLotId').value = key;
-    document.getElementById('editLotName').value = name;
-    document.getElementById('editLotPrice').value = price;
-    editModal.style.display = 'flex';
-};
-
-document.getElementById('saveEditBtn').onclick = () => {
-    const key = document.getElementById('editLotId').value;
-    update(ref(db, 'market_lots/' + key), {
-        name: document.getElementById('editLotName').value,
-        price: document.getElementById('editLotPrice').value
-    }).then(() => editModal.style.display = 'none');
-};
-document.getElementById('cancelEditBtn').onclick = () => editModal.style.display = 'none';
-
-function startFakeLogs() {
-    const logDiv = document.getElementById('ipLogs');
-    setInterval(() => {
-        if(adminPanel.style.display === 'none') return;
-        const ips = ["192.168.0.1", "10.5.22.1", "88.55.12.90", "45.11.2.1"];
-        const ip = ips[Math.floor(Math.random()*ips.length)];
-        const line = document.createElement('div');
-        line.innerHTML = `> [${new Date().toLocaleTimeString()}] Connection ${ip} <span style="color:#22c55e">OK</span>`;
-        logDiv.appendChild(line);
-        logDiv.scrollTop = logDiv.scrollHeight;
-    }, 2000);
-}
-
-// Закрытие
+// Закрытие окон
 document.querySelectorAll('.close-modal, .close-admin').forEach(btn => btn.onclick = function() {
     this.closest('.modal-overlay, .admin-overlay').style.display = 'none';
 });
